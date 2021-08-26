@@ -5,16 +5,18 @@ fn main() {
     let s = "🐶🐔🐷🐮🐱";
     let pattern = "World";
     let pattern = "🐮";
-    let pattern_chars = pattern.chars().collect::<Vec<_>>();
+    let pattern_chars = pattern
+        .chars()
+        .collect::<Vec<_>>();
 
-    let skip_table: HashMap<char, usize> = pattern
+    let skip_table  = pattern
         .chars()
         .rev()
         .enumerate()
         .map(|(i, c)| {
             return (c, i);
         })
-        .collect();
+        .collect::<HashMap<_, _>>();
 
     let last_char = pattern_chars
         .last()
@@ -25,12 +27,12 @@ fn main() {
     let string_chars = s.chars().collect::<Vec<char>>();
     let end_index = string_chars.len();
 
-    while  start_index < end_index {
+    while start_index < end_index {
         let c = string_chars[start_index];
 
 
         if c == *last_char {
-            if &string_chars[start_index-p+1..start_index+1] == pattern_chars {
+            if &string_chars[start_index - p + 1..start_index + 1] == pattern_chars {
                 println!("{:?}", start_index - p + 1);
             }
 
