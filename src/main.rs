@@ -1,55 +1,62 @@
 use std::collections::HashMap;
+use std::time::Instant;
 
-fn main() {
-    let s = "Hello, World";
-    let s = "🐶🐔🐷🐮🐱";
-    let pattern = "World";
-    let pattern = "🐮";
-    let pattern_chars = pattern
-        .chars()
-        .collect::<Vec<_>>();
-
-    let skip_table  = pattern
-        .chars()
-        .rev()
-        .enumerate()
-        .map(|(i, c)| {
-            return (c, i);
-        })
-        .collect::<HashMap<_, _>>();
-
-    let last_char = pattern_chars
-        .last()
-        .expect("There is a las char.");
-
-    let p = pattern_chars.len();
-    let mut start_index = p - 1;
-    let string_chars = s.chars().collect::<Vec<char>>();
-    let end_index = string_chars.len();
-
-    while start_index < end_index {
-        let c = string_chars[start_index];
-
-
-        if c == *last_char {
-            if &string_chars[start_index - p + 1..start_index + 1] == pattern_chars {
-                println!("{:?}", start_index - p + 1);
-            }
-
-            start_index += 1;
-        } else {
-            let &a = skip_table.get(&c).unwrap_or(&p);
-            let i = a + start_index;
-            if i < end_index {
-                start_index = i;
-            } else {
-                //TODO not found.
-                start_index = end_index;
-            }
-        }
-    }
-}
+fn main() {}
 
 trait BoyerMoore {
-    fn index(&self, pattern: &str) -> Option<usize>;
+    fn index(&self, pat: &str) -> Option<usize>;
+}
+
+impl BoyerMoore for &str {
+    fn index(&self, pat: &str) -> Option<usize> {
+        let str_bytes = self.as_bytes();
+        let pat_bytes = pat.as_bytes();
+
+        let pat_len = pat_bytes.len();
+        let last_bytes = pat_bytes
+            .last()
+            .expect("The pattern is empty.");
+        let end_index = str_bytes.len();
+
+        let mut skip_table: [usize; 256] = [pat_len; 256];
+        for i in 0..pat_len {
+            let a = pat_bytes[i] as usize;
+            skip_table[a] = pat_len - i - 1;
+        }
+
+        fn compare_is_match(a: &[u8], b: &[u8], end_index: usize) -> bool {
+            // TODO There may be a better solution.
+            for i in b.len()..0 {
+                if a[end_index - i] != b[i] {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        fn find_next_index(start_index: usize, offset: usize, limit: usize) -> usize {
+            return if limit - offset > start_index {
+                start_index + offset
+            } else {
+                limit
+            };
+        }
+
+        let mut start_index = pat_len - 1;
+
+        while start_index < end_index {
+            let c = str_bytes[start_index];
+
+            if c == *last_bytes {
+                if compare_is_match(str_bytes, pat_bytes, start_index) {
+                    return Some(start_index - pat_len + 1);
+                }
+                start_index += 1;
+            } else {
+                start_index = find_next_index(start_index, skip_table[c as usize], end_index);
+            }
+        }
+
+        None
+    }
 }
